@@ -1,3 +1,6 @@
+// Modified by the btop-zh project: Chinese localization and macOS packaging.
+// See THIRD_PARTY_NOTICES.md and CHANGELOG.md for sources and changes.
+
 /* Copyright 2021 Aristocratos (jakob@qvantnet.com)
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,6 +76,7 @@ namespace Config {
 	bool write_new;
 
 	const vector<array<string, 2>> descriptions = {
+		{"lang", "#* UI language: zh (Chinese), en (English). Restart to apply."},
 		{"color_theme", 		"#* Name of a btop++/bpytop/bashtop formatted \".theme\" file, \"Default\" and \"TTY\" for builtin themes.\n"
 								"#* Themes should be placed in \"../share/btop/themes\" relative to binary or \"$HOME/.config/btop/themes\""},
 
@@ -271,6 +275,7 @@ namespace Config {
 	};
 
 	std::unordered_map<std::string_view, string> strings = {
+		{"lang", "zh"},
 		{"color_theme", "Default"},
 		{"shown_boxes", "cpu mem net proc"},
 		{"graph_symbol", "braille"},
@@ -406,12 +411,12 @@ namespace Config {
 			std::error_code error;
 			if (const auto xdg_config_home = std::getenv("XDG_CONFIG_HOME"); xdg_config_home != nullptr) {
 				if (fs::exists(xdg_config_home, error)) {
-					config_dir = fs::path(xdg_config_home) / "btop";
+					config_dir = fs::path(xdg_config_home) / "btop-zh";
 				}
 			} else if (const auto home = std::getenv("HOME"); home != nullptr) {
 				error.clear();
 				if (fs::exists(home, error)) {
-					config_dir = fs::path(home) / ".config" / "btop";
+					config_dir = fs::path(home) / ".config" / "btop-zh";
 				}
 				if (error) {
 					fmt::print(stderr, "\033[0;31mWarning: \033[0m{} could not be accessed: {}\n", config_dir.string(), error.message());
@@ -871,7 +876,7 @@ namespace Config {
 	}
 
 	auto get_log_file() -> std::optional<fs::path> {
-		return get_xdg_state_dir().transform([](auto&& state_home) -> auto { return state_home / "btop.log"; });
+		return get_xdg_state_dir().transform([](auto&& state_home) -> auto { return state_home / "btop-zh.log"; });
 	}
 
 	auto current_config() -> std::string {

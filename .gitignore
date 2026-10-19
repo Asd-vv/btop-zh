@@ -88,3 +88,11 @@ CMakeUserPresets.json
 
 # CLion
 cmake-build-*
+
+# Local macOS release artifacts
+/dist/
+
+# macOS and Python generated files
+.DS_Store
+__pycache__/
+*.py[cod]

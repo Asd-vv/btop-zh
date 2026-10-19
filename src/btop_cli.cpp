@@ -1,3 +1,6 @@
+// Modified by the btop-zh project: Chinese localization and macOS packaging.
+// See THIRD_PARTY_NOTICES.md and CHANGELOG.md for sources and changes.
+
 // SPDX-License-Identifier: Apache-2.0
 
 #include "btop_cli.hpp"
@@ -35,9 +38,9 @@ static constexpr auto RESET = "\033[0m"sv;
 
 static void version() noexcept {
 	if constexpr (GIT_COMMIT.empty()) {
-		fmt::println("btop version: {}{}{}", BOLD, Global::Version, RESET);
+		fmt::println("btop-zh version: {}{}{}", BOLD, Global::Version, RESET);
 	} else {
-		fmt::println("btop version: {}{}+{}{}", BOLD, Global::Version, GIT_COMMIT, RESET);
+		fmt::println("btop-zh version: {}{}+{}{}", BOLD, Global::Version, GIT_COMMIT, RESET);
 	}
 }
 
@@ -243,7 +246,7 @@ namespace Cli {
 	}
 
 	void usage() noexcept {
-		fmt::println("{0}Usage:{1} {2}btop{1} [OPTIONS]\n", BOLD_UNDERLINE, RESET, BOLD);
+		fmt::println("{0}Usage:{1} {2}btop-zh{1} [OPTIONS]\n", BOLD_UNDERLINE, RESET, BOLD);
 	}
 
 	void help() noexcept {

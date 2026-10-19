@@ -1,3 +1,6 @@
+// Modified by the btop-zh project: Chinese localization and macOS packaging.
+// See THIRD_PARTY_NOTICES.md and CHANGELOG.md for sources and changes.
+
 /* Copyright 2021 Aristocratos (jakob@qvantnet.com)
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -237,33 +240,39 @@ namespace Tools {
 		return str;
 	}
 
-	size_t wide_ulen(const std::string_view str) {
-		if (str.empty())
-			return 0;
-		unsigned int chars = 0;
-
-		const char* str_data = &str.data()[0];
-			size_t w_len = 1 + std::mbstowcs(nullptr, str_data, 0);
-		if (w_len <= 1)
-			return ulen(str);
-		vector<wchar_t> w_str(w_len);
-		std::mbstowcs(&w_str[0], str_data, w_len);
-
-		for (auto c : w_str) {
-			chars += widechar_wcwidth(c);
+	// Decode bounded UTF-8 views without relying on a trailing NUL.
+	static vector<std::pair<size_t, int>> display_chars(std::string_view str) {
+		vector<std::pair<size_t, int>> chars;
+		std::mbstate_t state{};
+		for (size_t pos = 0; pos < str.size();) {
+			// ANSI CSI sequences occupy no terminal cells.
+			if (str[pos] == '\x1b' and pos + 1 < str.size() and str[pos + 1] == '[') {
+				size_t end = pos + 2;
+				while (end < str.size() and not (str[end] >= '@' and str[end] <= '~')) ++end;
+				if (end < str.size()) { pos = end + 1; chars.emplace_back(pos, 0); continue; }
+			}
+			wchar_t value{};
+			auto bytes = std::mbrtowc(&value, str.data() + pos, str.size() - pos, &state);
+			if (bytes == static_cast<size_t>(-1) or bytes == static_cast<size_t>(-2)) {
+				state = {}; bytes = 1; value = L'?';
+			}
+			if (bytes == 0) bytes = 1;
+			pos += bytes;
+			chars.emplace_back(pos, std::max(0, widechar_wcwidth(value)));
 		}
-
 		return chars;
 	}
 
+	size_t wide_ulen(const std::string_view str) {
+		size_t width = 0;
+		for (const auto& [end, cells] : display_chars(str)) width += cells;
+		return width;
+	}
+
 	size_t wide_ulen(const vector<wchar_t> w_str) {
-		unsigned int chars = 0;
-
-		for (auto c : w_str) {
-			chars += widechar_wcwidth(c);
-		}
-
-		return chars;
+		size_t width = 0;
+		for (auto c : w_str) width += std::max(0, widechar_wcwidth(c));
+		return width;
 	}
 
 	string uresize(string str, const size_t len, bool wide) {
@@ -271,20 +280,12 @@ namespace Tools {
 			return "";
 
 		if (wide) {
-			const char* str_data = &str.data()[0];
-			size_t w_len = 1 + std::mbstowcs(nullptr, str_data, 0);
-			if (w_len <= 1)
-				return uresize(str, len, false);
-			vector<wchar_t> w_str(w_len);
-			std::mbstowcs(&w_str[0], str_data, w_len);
-
-			while (wide_ulen(w_str) > len) w_str.pop_back();
-
-			string n_str;
-			n_str.resize(w_str.size());
-			std::wcstombs(&n_str[0], &w_str[0], w_str.size());
-
-			return n_str;
+			size_t width = 0, end = 0;
+			for (const auto& [next, cells] : display_chars(str)) {
+				if (width + cells > len) break;
+				width += cells; end = next;
+			}
+			return str.substr(0, end);
 		}
 		else {
 			for (size_t x = 0, i = 0; i < str.size(); i++) {
@@ -302,6 +303,17 @@ namespace Tools {
 	string luresize(string str, const size_t len, bool wide) {
 		if (len < 1 or str.empty())
 			return "";
+
+		if (wide) {
+			const auto chars = display_chars(str);
+			size_t width = 0, begin = str.size();
+			for (size_t i = chars.size(); i > 0; --i) {
+				if (width + chars[i - 1].second > len) break;
+				width += chars[i - 1].second;
+				begin = (i > 1 ? chars[i - 2].first : 0);
+			}
+			return str.substr(begin);
+		}
 
 		for (size_t x = 0, last_pos = 0, i = str.size() - 1; i > 0 ; i--) {
 			if (wide and static_cast<unsigned char>(str.at(i)) > 0xef) {
@@ -343,52 +355,24 @@ namespace Tools {
 		return str;
 	}
 
+	static string justify(string str, size_t x, bool utf, bool wide, bool limit, int align) {
+		auto width = (utf ? ulen(str, wide) : str.size());
+		if (limit and width > x) {
+			str = (utf ? uresize(str, x, wide) : str.substr(0, x));
+			width = (utf ? ulen(str, wide) : str.size());
+		}
+		const auto padding = (width < x ? x - width : 0);
+		const auto left = (align == 0 ? 0 : align == 1 ? padding : (padding + 1) / 2);
+		return string(left, ' ') + str + string(padding - left, ' ');
+	}
 	string ljust(string str, const size_t x, bool utf, bool wide, bool limit) {
-		if (utf) {
-			if (limit and ulen(str, wide) > x)
-				return uresize(str, x, wide);
-
-			return str + string(max((int)(x - ulen(str)), 0), ' ');
-		}
-		else {
-			if (limit and str.size() > x) {
-				str.resize(x);
-				return str;
-			}
-			return str + string(max((int)(x - str.size()), 0), ' ');
-		}
+		return justify(std::move(str), x, utf, wide, limit, 0);
 	}
-
 	string rjust(string str, const size_t x, bool utf, bool wide, bool limit) {
-		if (utf) {
-			if (limit and ulen(str, wide) > x)
-				return uresize(str, x, wide);
-
-			return string(max((int)(x - ulen(str)), 0), ' ') + str;
-		}
-		else {
-			if (limit and str.size() > x) {
-				str.resize(x);
-				return str;
-			};
-			return string(max((int)(x - str.size()), 0), ' ') + str;
-		}
+		return justify(std::move(str), x, utf, wide, limit, 1);
 	}
-
 	string cjust(string str, const size_t x, bool utf, bool wide, bool limit) {
-		if (utf) {
-			if (limit and ulen(str, wide) > x)
-				return uresize(str, x, wide);
-
-			return string(max((int)ceil((double)(x - ulen(str)) / 2), 0), ' ') + str + string(max((int)floor((double)(x - ulen(str)) / 2), 0), ' ');
-		}
-		else {
-			if (limit and str.size() > x) {
-				str.resize(x);
-				return str;
-			}
-			return string(max((int)ceil((double)(x - str.size()) / 2), 0), ' ') + str + string(max((int)floor((double)(x - str.size()) / 2), 0), ' ');
-		}
+		return justify(std::move(str), x, utf, wide, limit, 2);
 	}
 
 	string trans(const string& str) {

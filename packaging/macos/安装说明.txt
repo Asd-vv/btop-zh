@@ -1,0 +1,49 @@
+btop-zh 中文版 · Apple Silicon Mac
+
+适用：Apple Silicon（M 系列）Mac，macOS 15 或更高版本。
+本机在 macOS 15.8.1 验证，其他版本仍需实际兼容性验证。
+无需 Homebrew、编译器或管理员权限。
+
+一、双击安装
+1. 解压完整 ZIP 安装包。
+2. 双击 Install.command，按窗口中的提示完成安装。
+3. 重新打开终端，输入 btop 即可运行中文版。
+   也可以输入 btop-zh。
+
+二、终端安装
+进入解压后的目录，执行：
+  sh install.sh
+
+当前终端立即启用：
+  export PATH="$HOME/.local/bin:$PATH"; hash -r; btop
+
+安装程序不能修改它的父终端环境，因此安装完成后需要重新打开
+终端，或在当前终端执行上面的命令。
+
+三、已有英文版 btop
+默认检测到冲突时会询问；非交互模式下会中止。
+明确选择用中文版作为默认命令时，执行：
+  sh install.sh --take-over
+Homebrew 等位置的原版程序会保留，通过 PATH 优先运行中文版。
+如果 ~/.local/bin 下有同名文件，会先备份，卸载时恢复。
+
+四、安装内容
+程序和主题：~/.local/share/btop-zh/
+启动命令：~/.local/bin/btop 和 ~/.local/bin/btop-zh
+安装器会向 ~/.zshrc（尊重 ZDOTDIR）和 ~/.bash_profile 添加
+有标记的 PATH 配置块，优先使用 ~/.local/bin。
+程序配置独立保存在 ~/.config/btop-zh/（尊重 XDG_CONFIG_HOME）。
+重复运行安装器可升级，配置文件保留，PATH 配置不会重复添加。
+
+五、卸载
+双击 Uninstall.command，或在终端执行：
+  sh "$HOME/.local/share/btop-zh/uninstall.sh"
+卸载只移除本安装器的程序、启动命令和 PATH 配置块。
+用户配置保留。安装后对 shell 配置文件的其他修改也会保留。
+如果启动命令已被其他程序改写，卸载时不会覆盖它，并会保留旧备份。
+
+六、校验与许可
+安装器使用 PAYLOAD.sha256 验证包内文件完整性。
+外层 ZIP/TAR.GZ 的校验值在 SHA256SUMS 中。
+本包未进行 Developer ID 分发签名或 Apple 公证。
+原项目及中文修改沿用 Apache-2.0；参见 LICENSE 和 README.md。

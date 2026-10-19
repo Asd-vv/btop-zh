@@ -1,0 +1,33 @@
+btop-zh 中文版 · Apple Silicon Mac
+
+安装方法
+1. 双击“安装 btop-zh.app”。安装器会打开终端并显示安装进度。
+2. 安装完成后，重新打开一个终端窗口。
+3. 输入 btop 即可运行；也可使用 btop-zh。
+4. 安装后可以推出本磁盘映像，无需保留 DMG。
+
+这是终端工具，不需要将安装入口拖到“应用程序”文件夹。
+程序、主题会复制到用户目录，运行时不依赖 DMG。
+
+适用：Apple Silicon（M 系列）Mac、macOS 15 或更高版本。
+无需 Homebrew、编译器或管理员权限。
+
+已有原版 btop 时，安装器会询问是否让中文版成为默认命令。
+系统原版文件保留；用户命令目录中的同名文件会先备份。
+
+安装位置
+程序：~/.local/share/btop-zh/
+命令：~/.local/bin/btop、~/.local/bin/btop-zh
+配置：~/.config/btop-zh/（设置 XDG_CONFIG_HOME 时使用对应目录）
+安装器向 .zshrc 和 .bash_profile 添加有标记的 PATH 配置。
+
+卸载方法
+双击“卸载 btop-zh.app”，或在终端执行：
+  sh "$HOME/.local/share/btop-zh/uninstall.sh"
+卸载保留用户配置，并按需恢复原有命令。
+
+分发说明
+此安装入口使用本地临时签名（ad-hoc），不是 Developer ID 签名，
+也未经过 Apple 公证。若用于公开分发，建议先完成正式签名与公证。
+
+原项目与中文修改沿用 Apache-2.0，参见安装包中的 LICENSE、THIRD_PARTY_NOTICES.md 和 licenses/。

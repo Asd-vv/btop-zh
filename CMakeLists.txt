@@ -1,3 +1,4 @@
+# btop-zh changes: localization sources, output name and regression checks.
 # SPDX-License-Identifier: Apache-2.0
 #
 # CMake configuration for btop
@@ -45,12 +46,14 @@ if(BTOP_STATIC AND NOT APPLE)
 endif()
 
 add_executable(btop src/main.cpp)
+set_target_properties(btop PROPERTIES OUTPUT_NAME btop-zh)
 add_library(libbtop OBJECT
   src/btop.cpp
   src/btop_cli.cpp
   src/btop_config.cpp
   src/btop_draw.cpp
   src/btop_input.cpp
+  src/btop_locale.cpp
   src/btop_log.cpp
   src/btop_menu.cpp
   src/btop_shared.cpp
@@ -276,4 +279,18 @@ install(DIRECTORY "themes" DESTINATION "share/btop")
 include(CTest)
 if(BUILD_TESTING)
   add_subdirectory(tests)
+endif()
+
+# Lightweight localization regression checks, without downloading GoogleTest.
+option(BTOP_ZH_CHECKS "Build localization regression checks" OFF)
+if(BTOP_ZH_CHECKS)
+  enable_testing()
+  add_executable(btop_zh_checks tests/zh_checks.cpp)
+  target_include_directories(btop_zh_checks PRIVATE src)
+  target_link_libraries(btop_zh_checks libbtop)
+  add_test(NAME btop_zh_checks COMMAND btop_zh_checks)
+  find_package(Python3 QUIET COMPONENTS Interpreter)
+  if(Python3_Interpreter_FOUND)
+    add_test(NAME btop_zh_option_coverage COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/check_option_translations.py)
+  endif()
 endif()
