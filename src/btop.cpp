@@ -525,7 +525,11 @@ namespace Runner {
 						gpu_panels.push_back(box.back()-'0');
 
 				vector<Gpu::gpu_info> gpus;
-				if (gpu_in_cpu_panel or not gpu_panels.empty()) {
+				if (gpu_in_cpu_panel or not gpu_panels.empty()
+#if defined(__APPLE__) && defined(__arm64__)
+					or (not Gpu::gpu_names.empty() and v_contains(conf.boxes, "cpu"))
+#endif
+				) {
 					if (Global::debug) debug_timer("gpu", collect_begin);
 					gpus = Gpu::collect(conf.no_update);
 					if (Global::debug) debug_timer("gpu", collect_done);

@@ -77,3 +77,9 @@ python3 tests/mac_ui_smoke.py build/macos-arm64/btop-zh
 - 中文参考：https://github.com/dijiaozhibei-top/btop-cn
 
 沿用 Apache-2.0；保留 LICENSE 和源文件版权声明。汉化参考快照、迁移依据见 [初始移植调研](ARM_MAC_ZH_PLAN.md)。本次二次修改由 Codex 辅助完成。
+
+## 功耗显示
+
+CPU 总负载行在温度后显示 CPU 功耗（W），并缩短负载条为数值留出空间；可用 `show_cpu_watts` 开关控制。Apple Silicon 版本通过 IOReport 的 `CPU Energy` 采样计算平均功率，无需 sudo。即使关闭 GPU 图表，CPU 功耗仍继续更新。
+
+CPU 型号后的 `~8.61W` 表示整机功耗估算，读取 macOS 电源遥测 `SystemLoad`，不等于 CPU 与 GPU 功耗之和，也不是插座端功率。该字段属于未公开接口，机型和系统版本可能影响可用性；不可用时显示 `~--W`。CPU 功耗缺失时显示 `--W`。功率单位 W 与累计耗电量 Wh 不同。

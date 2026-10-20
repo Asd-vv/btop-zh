@@ -403,6 +403,7 @@ namespace Gpu {
 
 		template <bool is_init>
 		bool collect(gpu_info* gpus_slice) {
+			Cpu::current_cpu.usage_watts = -1;
 			if (not initialized) return false;
 
 			if constexpr (is_init) {
@@ -516,8 +517,8 @@ namespace Gpu {
 					}
 				}
 
-				//? GPU power from Energy Model
-				if (group == "Energy Model" and channel == "GPU Energy") {
+				//? CPU and GPU power from Energy Model
+				if (group == "Energy Model" and (channel == "GPU Energy" or channel == "CPU Energy")) {
 					string unit = cfstring_to_string(IOReportChannelGetUnitLabel(item));
 					int64_t val = IOReportSimpleGetIntegerValue(item, 0);
 					double energy = static_cast<double>(val);
@@ -526,11 +527,16 @@ namespace Gpu {
 					if (unit.find("nJ") != string::npos) energy /= 1e9;
 					else if (unit.find("uJ") != string::npos or unit.find("\xc2\xb5J") != string::npos) energy /= 1e6;
 					else if (unit.find("mJ") != string::npos) energy /= 1e3;
+					else if (unit != "J") continue;
 					//? energy is now in Joules
 
-					if (divisor > 0) {
-						gpu_power_watts = energy / divisor;
-						got_gpu_power = true;
+					if (divisor > 0 and energy >= 0) {
+						if (channel == "CPU Energy") {
+							Cpu::current_cpu.usage_watts = energy / divisor;
+						} else {
+							gpu_power_watts = energy / divisor;
+							got_gpu_power = true;
+						}
 					}
 				}
 			}
@@ -718,6 +724,8 @@ namespace Shared {
 		auto shown_gpus = Config::getS("shown_gpus");
 		if (shown_gpus.contains("apple")) {
 			Gpu::AppleSilicon::init();
+			Cpu::supports_watts = true;
+			Cpu::current_cpu.usage_watts = -1;
 		}
 
 		if (not Gpu::gpu_names.empty()) {
@@ -1020,6 +1028,21 @@ namespace Cpu {
 		if (Runner::stopping or (no_update and not current_cpu.cpu_percent.at("total").empty()))
 			return current_cpu;
 		auto &cpu = current_cpu;
+		// SystemLoad is an undocumented milliwatt estimate, not wall-socket power.
+		cpu.system_watts = -1;
+		const auto battery = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("AppleSmartBattery"));
+		if (battery) {
+			CFRef<CFTypeRef> telemetry(IORegistryEntryCreateCFProperty(battery, CFSTR("PowerTelemetryData"), kCFAllocatorDefault, 0));
+			if (telemetry.get() and CFGetTypeID(telemetry.get()) == CFDictionaryGetTypeID()) {
+				auto value = CFDictionaryGetValue(static_cast<CFDictionaryRef>(telemetry.get()), CFSTR("SystemLoad"));
+				double milliwatts = -1;
+				if (value and CFGetTypeID(value) == CFNumberGetTypeID()
+					and CFNumberGetValue(static_cast<CFNumberRef>(value), kCFNumberDoubleType, &milliwatts)
+					and std::isfinite(milliwatts) and milliwatts > 0 and milliwatts < 1000000)
+					cpu.system_watts = milliwatts / 1000.0;
+			}
+			IOObjectRelease(battery);
+		}
 
 		if (getloadavg(cpu.load_avg.data(), cpu.load_avg.size()) < 0) {
 			Logger::error("failed to get load averages");

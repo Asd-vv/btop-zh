@@ -234,6 +234,8 @@ namespace Cpu {
 		long long temp_max = 0;
 		array<double, 3> load_avg;
 		float usage_watts = 0;
+		// macOS system load estimate; negative means unavailable.
+		float system_watts = -1;
 		std::optional<std::vector<std::int32_t>> active_cpus;
 	};
 

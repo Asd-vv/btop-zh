@@ -750,7 +750,7 @@ namespace Cpu {
 				cpu_meter_width -= 6;
 			}
 
-			cpu_meter = Draw::Meter{cpu_meter_width, "cpu"};
+			cpu_meter = Draw::Meter{max(1, cpu_meter_width), "cpu"};
 
 			if (mid_line) {
 				out += Mv::to(y + graph_up_height + 1, x) + Fx::ub + Theme::c("cpu_box") + Symbols::div_left + Theme::c("div_line")
@@ -881,6 +881,17 @@ namespace Cpu {
 			const bool freq_range = false;
 		#endif
 
+#ifdef __APPLE__
+			// Refresh the model and system-power title without disturbing the frequency.
+			const int title_width = max(0, b_width - (Config::getB("show_cpu_freq") and not cpuHz.empty() ? 14 : 5));
+			const string system_power = cpu.system_watts >= 0 ? fmt::format(" ~{:.2f}W", cpu.system_watts) : " ~--W";
+			const auto& custom_name = Config::getS("custom_cpu_name");
+			const string model = uresize(custom_name.empty() ? cpuName : custom_name, max(0, title_width - (int)system_power.size()));
+			const string power_title = ljust_cjk(model + system_power, title_width);
+			out += Mv::to(b_y, b_x + 2) + Symbols::title_left + Fx::b + Theme::c("title") + power_title
+				+ Fx::ub + Theme::c("div_line") + Symbols::title_right;
+#endif
+
 			//? Cpu clock and cpu meter
 			if (Config::getB("show_cpu_freq") and not cpuHz.empty())
 				out += Mv::to(b_y, b_x + b_width - (freq_range ? 20 : 10)) + Fx::ub + Theme::c("div_line")
@@ -900,7 +911,7 @@ namespace Cpu {
 
 			if (show_watts) {
 				const auto clamped_watts = clamp(cpu.usage_watts, 0.0f, 999.0f);
-				string cwatts = fmt::format(" {:>4.{}f}", clamped_watts, clamped_watts < 9.995f ? 2 : clamped_watts < 99.95f ? 1 : 0);
+				string cwatts = cpu.usage_watts < 0 ? "   --" : fmt::format(" {:>4.{}f}", clamped_watts, clamped_watts < 9.995f ? 2 : clamped_watts < 99.95f ? 1 : 0);
 				string cwatts_post = "W";
 
 				max_observed_pwr = max(max_observed_pwr, clamped_watts);

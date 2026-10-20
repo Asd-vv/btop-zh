@@ -2,7 +2,13 @@
 
 本文记录 btop-zh 的修改。上游历史见 [docs/upstream/CHANGELOG.md](docs/upstream/CHANGELOG.md)。
 
-## 未发布
+## v1.4.7-zh.2（2026-10-20）
+
+- macOS CPU 总负载行在温度后显示 CPU 功耗，缩短负载条。
+- CPU 型号后增加整机估算功耗（`~…W`）；缺失数据使用 `--W`，避免误报为零。
+
+
+## v1.4.7-zh.1（2026-10-19）
 
 ### 中文界面
 
